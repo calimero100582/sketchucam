@@ -81,7 +81,7 @@ module PhlatScript
   class IniGenerator
 
     def isSimpleType(var)
-      return (var.is_a? Fixnum or var.is_a? String or var.is_a? Float or var.is_a? TrueClass or var.is_a? FalseClass)
+      return (var.is_a? Integer or var.is_a? String or var.is_a? Float or var.is_a? TrueClass or var.is_a? FalseClass)
     end
 
     def validateMap(map)
@@ -125,7 +125,8 @@ module PhlatScript
       begin
         iniFile << iniString
         iniFile.close  # if we don't close it here we will never see the content until after Sketchup closes
-      rescue
+      rescue => error
+        puts error.backtrace
         iniFile.close unless iniFile.nil?
       end
     end

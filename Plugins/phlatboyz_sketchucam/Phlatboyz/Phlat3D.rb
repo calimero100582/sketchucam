@@ -14,7 +14,7 @@
 #						Fix multipass bug, plunges to fulldepth before each pass, should only plunge to pass depth
 
 require 'sketchup.rb'
-require 'Phlatboyz/PhlatProgress.rb'
+Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/PhlatProgress.rb'
 
 module PhlatScript
 
@@ -390,7 +390,7 @@ class GCodeGen3D
    def putHeader(nf)
 #      ver = "debug"
       vs1 = PhlatScript.getString('PhlatboyzGcodeTrailer')
-      vs2 = $PhlatScriptExtension.version
+      vs2 = Sketchup.extensions["Phlatboyz Tools"].version
       ver = "#{vs1%vs2}"
       nf.puts PhlatScript.gcomment("A 3D Contour : #{ver}")
       nf.puts PhlatScript.gcomment("Bit Diameter: #{Sketchup.format_length(@bitDiam)}")

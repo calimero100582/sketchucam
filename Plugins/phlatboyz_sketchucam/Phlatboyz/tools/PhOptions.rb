@@ -4,11 +4,11 @@
 # everywhere that the old Default globals are used must be changed to use the options class values
 # $Id$
 
-#require 'PhlatBoyz/Constants.rb'
+#Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/Constants.rb'
 
-require 'Phlatboyz/PhlatTool.rb'
-require 'Phlatboyz/utils/SketchupDirectoryUtils.rb'
-require('Phlatboyz/utils/IniParser.rb')
+Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/PhlatTool.rb'
+Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/utils/SketchupDirectoryUtils.rb'
+require('phlatboyz_sketchucam/Phlatboyz/utils/IniParser.rb')
 
 
 module PhlatScript
@@ -1137,6 +1137,7 @@ end # class
          begin
             input=UI.inputbox(prompts, defaults, list, 'Tool Options (read the help!)')
          rescue ArgumentError => error
+            puts error.backtrace
             UI.messagebox(error.message)
             retry
          end
@@ -1225,6 +1226,7 @@ end # class
          begin
             input=UI.inputbox(prompts, defaults, list, 'Machine Options (read the help!)')
          rescue ArgumentError => error
+            puts error.backtrace
             UI.messagebox(error.message)
             retry
          end
@@ -1326,6 +1328,7 @@ end # class
          begin
             input=UI.inputbox(prompts, defaults, list, 'Feature Options (read the help!)')
          rescue ArgumentError => error
+            puts error.backtrace
             UI.messagebox(error.message)
             retry
          end         # input is nil if user cancelled
@@ -1416,6 +1419,7 @@ end # class
          begin
             input=UI.inputbox(prompts, defaults, list, 'Hole Feature Options (read the help!)')
          rescue ArgumentError => error
+            puts error.backtrace
             UI.messagebox(error.message)
             retry
          end         # input is nil if user cancelled

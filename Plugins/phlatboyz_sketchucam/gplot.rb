@@ -1,6 +1,6 @@
 
 require 'sketchup.rb'
-require 'Phlatboyz/Phlatscript.rb'
+Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/Phlatscript.rb'
 # $Id$
 
 class GPlot

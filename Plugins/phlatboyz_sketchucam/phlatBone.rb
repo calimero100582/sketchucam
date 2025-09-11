@@ -30,8 +30,8 @@
 #-----------------------------------------------------------------------------
 
 require 'sketchup.rb'
-#require "Phlatboyz/PhlatboyzMethods.rb"
-require 'Phlatboyz/utils/SketchupDirectoryUtils.rb'
+#Sketchup.require "phlatboyz_sketchucam/Phlatboyz/PhlatboyzMethods.rb"
+Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/utils/SketchupDirectoryUtils.rb'
 
 module PhlatBoner
 

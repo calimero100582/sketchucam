@@ -19,10 +19,12 @@ module PhlatScript
          # Sketchup.find_support_file returns directory in:
          # ~/Library/Application Support/Sketchup X/SketchUp/
          # we will store profiles in Profiles subdirectory
-         path = File.join(Sketchup.find_support_file("Plugins"),"Phlatboyz", "Profiles")
+         path = File.join(Sketchup.find_support_file("Plugins"), 'phlatboyz_sketchucam', "Phlatboyz", "Profiles")
       else
          # Windows - support files are read only in win7, so use appdata
-         path = ENV['APPDATA'] + "\\Sketchup"
+         #path = ENV['APPDATA'] + "\\Sketchup"
+         #path = Sketchup.find_support_file('Plugins')
+         path = File.join(Sketchup.find_support_file("Plugins"), 'phlatboyz_sketchucam', "Phlatboyz", "Profiles")
       end
       return path
    end

@@ -1,6 +1,6 @@
 
 
-require 'Phlatboyz/PhlatCut.rb'
+Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/PhlatCut.rb'
 
 module PhlatScript
 

@@ -22,8 +22,8 @@
 # $Id$
 
 require 'sketchup.rb'
-require 'Phlatboyz/PhlatCut.rb'
-require 'Phlatboyz/Tools/CenterLineCut.rb'
+Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/PhlatCut.rb'
+Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/Tools/CenterLineCut.rb'
 
 module PhlatScript
 

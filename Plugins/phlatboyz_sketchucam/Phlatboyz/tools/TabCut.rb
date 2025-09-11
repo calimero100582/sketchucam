@@ -1,5 +1,5 @@
-require 'Phlatboyz/PhlatCut.rb'
-require 'Phlatboyz/tools/PhlatArc.rb'
+Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/PhlatCut.rb'
+Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/tools/PhlatArc.rb'
 
 module PhlatScript
 

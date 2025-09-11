@@ -1,15 +1,15 @@
 require 'sketchup.rb'
-# require 'Phlatboyz/Constants.rb'
+# Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/Constants.rb'
 
-require 'Phlatboyz/PhlatboyzMethods.rb'
-require 'Phlatboyz/PhlatOffset.rb'
+Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/PhlatboyzMethods.rb'
+Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/PhlatOffset.rb'
 
-require 'Phlatboyz/PhlatMill.rb'
-require 'Phlatboyz/PhlatTool.rb'
-require 'Phlatboyz/PhlatCut.rb'
-require 'Phlatboyz/PSUpgrade.rb'
-require 'Phlatboyz/Phlat3D.rb'
-require 'Phlatboyz/PhlatProgress.rb'
+Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/PhlatMill.rb'
+Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/PhlatTool.rb'
+Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/PhlatCut.rb'
+Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/PSUpgrade.rb'
+Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/Phlat3D.rb'
+Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/PhlatProgress.rb'
 
 module PhlatScript
    # this tool gets the list of groups containing phlatcuts and displays them in the cut order
@@ -208,6 +208,7 @@ module PhlatScript
 
                   # TODO: check for existing / on the end of output_directory_name
                   absolute_File_name = output_directory_name + output_file_name
+                  puts absolute_File_name
 
                   safe_array = P.get_safe_array
                   min_x = 0.0
@@ -304,9 +305,10 @@ module PhlatScript
                   Sketchup.set_status_text('Job finish')
                   aMill.job_finish # output housekeeping code
                   return true
-               rescue
+               rescue => e
                   puts $ERROR_INFO
-                  UI.messagebox 'GcodeUtil.generate_gcode FAILED; Error:' + $ERROR_INFO.to_s
+                  UI.messagebox 'GcodeUtil.generate_gcode FAILED; Error:' + $ERROR_INFO.to_s + e.message
+                  puts e.backtrace
                   return false
                end
             else
@@ -430,8 +432,10 @@ module PhlatScript
 
                   # puts("finishing up")
                   aMill.job_finish # output housekeeping code
-               rescue
-                  UI.messagebox 'GcodeUtil.generate_gcode failed; Error:' + $ERROR_INFO
+               rescue => e
+                  puts $ERROR_INFO
+                  UI.messagebox 'GcodeUtil.generate_gcode FAILED; Error:' + $ERROR_INFO.to_s + e.message
+                  puts e.backtrace
                end
             else
                UI.messagebox(PhlatScript.getString('You must define the material thickness.'))
@@ -1539,6 +1543,8 @@ module PhlatScript
                end until (!PhlatScript.useMultipass? || ((pass_depth - max_depth).abs < 0.0001))
                @g_save_point = save_point unless save_point.nil? # for optimizer
             rescue Exception => e
+               puts "error message 1"
+               puts e.backtrace
                raise e.message
                # UI.messagebox "Exception in millEdges "+$! + e.backtrace.to_s
             end
@@ -1869,6 +1875,8 @@ module PhlatScript
 
                @g_save_point = save_point unless save_point.nil? # for optimizer
             rescue Exception => e
+               puts "error message 2"
+               puts e.backtrace
                raise e.message
                # UI.messagebox "Exception in millEdges "+$! + e.backtrace.to_s
             end

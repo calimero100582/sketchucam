@@ -1,8 +1,9 @@
 # $Id$
 require('sketchup.rb')
 require('extensions.rb')
-require('Phlatboyz/Constants.rb')
-require('Phlatboyz/Observers.rb')
+require('phlatboyz_sketchucam/Phlatboyz/Constants.rb')
+require('phlatboyz_sketchucam/Phlatboyz/Observers.rb')
+Sketchup.require 'phlatboyz_sketchucam/phlatboyz.rb'
 
 
 module PhlatScript
@@ -30,7 +31,8 @@ module PhlatScript
         m.color = "white"
       end
       PhlatScript.use_abs_depth = PhlatScript.use_abs_depth?
-    rescue
+    rescue => e
+      puts e.backtrace
       model.abort_operation
     end
     model.commit_operation
@@ -56,43 +58,6 @@ module PhlatScript
          return ','
       end
    end
-
-   def PhlatScript.load
-
-      # try to warn the user about not having a . as decimal separator
-      if (decimal_separator() == ',')
-         UI.messagebox('WARNING: you have a character other than the "." defined as decimal seperator, but this confuses Sketchup and SketchUcam, please set it to . (point) in Windows Regional Settings')
-      end
-
-    Sketchup.active_model.add_observer(PhlatScript.modelChangeObserver)
-    return if @@Loaded
-    puts "loadtools"
-    loadTools
-    puts "add context menu"
-      UI.add_context_menu_handler do | menu | contextMenuHandler(menu) end
-    puts "setmodeloptions"
-    setModelOptions(Sketchup.active_model)
-    @@Loaded = true
-    puts "loaded"
-
-
-#   length = (4.0/3.0).to_l.to_s     # generate a string with a decimal seperator
-#   UI.messagebox(length)
-#   if (length.count('/') > 0)  # then using fractional and we don't know anything new
-#      #UI.messagebox('fractional')
-#   else
-#      if (length.count(',') > 0) && (length.count('.') == 0)  # if it is a comma, warn user
-#         UI.messagebox('Warning: you have the comma defined as decimal seperator, but this confuses Sketchup and SketchUcam, please set it to . (point) in Windows Regional Settings')
-#      else
-#         if (length.count('.') != 1)   # if it is not a point, warn user
-#            UI.messagebox('WARNING: you have a character other than the "." defined as decimal seperator, but this confuses Sketchup and SketchUcam, please set it to . (point) in Windows Regional Settings')
-#         end
-#      end
-#   end
-   #https://github.com/thomthom/SketchUp-Units-and-Locale-Helper
-   #http://sketchucation.com/forums/viewtopic.php?f=180&t=28346
-
-  end
 
   def PhlatScript.contextMenuHandler(menu)
     submenu = menu.add_submenu(PhlatScript.getString("Phlat Edge"))
@@ -535,25 +500,25 @@ module PhlatScript
     add_separator_to_menu("Tools")
     @@phlatboyz_tools_submenu = UI.menu("Tools").add_submenu(getString("Phlatboyz"))
 
-    require 'Phlatboyz/tools/ParametersTool.rb'
+    Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/tools/ParametersTool.rb'
     addToolItem(ParametersTool.new())
 
-    require 'Phlatboyz/tools/ProfilesTool.rb'
+    Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/tools/ProfilesTool.rb'
     addToolItem(ProfilesSaveTool.new())
     addToolItem(ProfilesLoadTool.new() )
     addToolItem(ProfilesDeleteTool.new() )
 
-    require 'Phlatboyz/tools/PhJoiner.rb'
+    Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/tools/PhJoiner.rb'
     jcmd = addToolItem(jtool = JoinerTool.new())  # need to add it to toolbar out of order
 
-    require 'Phlatboyz/tools/RampTabTool.rb'
+    Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/tools/RampTabTool.rb'
     addToolItem(RampTabTool.new())
 
-    require 'Phlatboyz/tools/ChamferWizard.rb'
+    Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/tools/ChamferWizard.rb'
     addToolItem(ChamferTool.new())
 
     @@phlatboyz_tools_submenu.add_separator
-       require 'PhlatBoyz/tools/PhOptions.rb'
+       Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/tools/PhOptions.rb'
        $phoptions = Options.new()
        optionssubmenu = @@phlatboyz_tools_submenu.add_submenu('Options')
        addToolItem( OptionsToolsTool.new($phoptions) , optionssubmenu)
@@ -564,37 +529,37 @@ module PhlatScript
        addToolItem( OptionsFilesTool.new($phoptions) , optionssubmenu)
     @@phlatboyz_tools_submenu.add_separator
 
-    require 'Phlatboyz/tools/CutTool.rb'
+    Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/tools/CutTool.rb'
     addToolItem(OutsideCutTool.new)
     addToolItem(InsideCutTool.new)
 
-    require 'Phlatboyz/tools/TabTool.rb'
+    Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/tools/TabTool.rb'
     addToolItem(TabTool.new())
 
-    require 'Phlatboyz/tools/FoldTool.rb'
+    Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/tools/FoldTool.rb'
     addToolItem(FoldTool.new())
 
-    require 'Phlatboyz/tools/PlungeTool.rb'
+    Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/tools/PlungeTool.rb'
     addToolItem(PlungeTool.new())
     addToolItem(CsinkTool.new())
     #addToolItem(CboreTool.new())
 
-    require 'Phlatboyz/tools/CenterLineTool.rb'
+    Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/tools/CenterLineTool.rb'
     addToolItem(CenterLineTool.new())
 
-    require 'Phlatboyz/tools/PhPocketTool.rb'
+    Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/tools/PhPocketTool.rb'
     addToolItem(PocketTool.new())
 
-    require 'Phlatboyz/tools/EraseTool.rb'
+    Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/tools/EraseTool.rb'
     addToolItem(EraseTool.new())
 
-    require 'Phlatboyz/tools/PhlattenTool.rb'
+    Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/tools/PhlattenTool.rb'
     addToolItem(PhlattenTool.new())
 
-    require 'Phlatboyz/tools/SafeTool.rb'
+    Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/tools/SafeTool.rb'
     addToolItem(SafeTool.new())
 
-    require 'Phlatboyz/tools/Ky_Reorder_Groups.rb'
+    Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/tools/Ky_Reorder_Groups.rb'
     addToolItem(Ky_Reorder_Groups.new())
          #also add this to the Plugins menu
     label = 'Kyyu Reorder Groups'
@@ -607,7 +572,7 @@ module PhlatScript
 
    @@commandToolbar.add_separator
 
-   require 'Phlatboyz/tools/ZeroTool.rb'
+   Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/tools/ZeroTool.rb'
    addToolItem(ZeroTool.new())
 
    jcmd.large_icon = jtool.largeIcon  # only need these for a toolbar item
@@ -615,32 +580,32 @@ module PhlatScript
    @@commandToolbar.add_item(jcmd)
 
 
-   require 'Phlatboyz/tools/GcodeUtil.rb'
+   Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/tools/GcodeUtil.rb'
    addToolItem(GcodeUtil.new())
    if (Sketchup.version.split('.')[0].to_i > 13)
-      require('Phlatboyz/tools/OBCtool.rb')
+      require('phlatboyz_sketchucam/Phlatboyz/tools/OBCtool.rb')
       addToolItem(OBCsquirt.new())
    end
 
     @@commandToolbar.add_separator
     @@phlatboyz_tools_submenu.add_separator
-    require 'Phlatboyz/tools/HomepageTool.rb'
+    Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/tools/HomepageTool.rb'
     addToolItem(HomepageTool.new())
 
-    require 'Phlatboyz/tools/HelpTool.rb'
+    Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/tools/HelpTool.rb'
     addToolItem(HelpTool.new())
     addToolItem( SummaryTool.new() )
     addToolItem( DisplayProfileFolderTool.new() )
     addToolItem( GroupList.new() )   # from GcodeUtil.rb but want the entry here
 
-    require 'Phlatboyz/tools/Quicktools.rb'
+    Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/tools/Quicktools.rb'
     addToolItem(UseCommentsTool.new())
     addToolItem(UseBracketsTool.new())
     addToolItem(FourthAxisTool.new())
     addToolItem(ToolChangeTool.new())
 
 
-#    require 'Phlatboyz/tools/TestTool.rb'
+#    Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/tools/TestTool.rb'
 #    addToolItem(TestTool.new())
     @@commandToolbar.show
 #    @@qToolbar.show
@@ -668,4 +633,18 @@ module PhlatScript
       return cmd
    end
 
+
+   
+    unless file_loaded?(__FILE__)
+      # try to warn the user about not having a . as decimal separator
+      if (decimal_separator() == ',')
+         UI.messagebox('WARNING: you have a character other than the "." defined as decimal seperator, but this confuses Sketchup and SketchUcam, please set it to . (point) in Windows Regional Settings')
+      end
+
+    Sketchup.active_model.add_observer(PhlatScript.modelChangeObserver)
+    loadTools
+      UI.add_context_menu_handler do | menu | contextMenuHandler(menu) end
+    setModelOptions(Sketchup.active_model)
+      file_loaded(__FILE__)
+    end
 end

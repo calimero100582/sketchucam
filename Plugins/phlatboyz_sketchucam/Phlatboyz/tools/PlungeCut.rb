@@ -1,4 +1,4 @@
-require 'Phlatboyz/PhlatCut.rb'
+Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/PhlatCut.rb'
 
 module PhlatScript
   @sqnc = 1
@@ -45,7 +45,8 @@ module PhlatScript
           angle += delta
         end
         status = view.draw_polyline(pt_arr)
-      rescue
+      rescue=> error
+         puts error.backtrace
         UI.messagebox "Exception in PlungeTool.draw_geometry "+$!
       end
     end
@@ -243,7 +244,8 @@ module PhlatScript
          diam = diam.to_s + '"'    # force it to decimal inch string
          begin
             diam.to_l      # try to convert
-         rescue
+         rescue => error
+            puts error.backtrace
             if diam.match('.')
                diam = diam.gsub(/\./,',')   #swap separators if it failed
             else
@@ -266,7 +268,8 @@ module PhlatScript
       end
       begin
          diam.to_l
-      rescue
+      rescue => error
+         puts error.backtrace
          if diam.match('.')
             diam = diam.gsub(/\./,',')
          else
@@ -285,7 +288,8 @@ module PhlatScript
       depth += '"'                  if !depth.match(/"|mm/)
       begin
          depth.to_l
-      rescue
+      rescue => error
+         puts error.backtrace
          if depth.match('.')
             depth = depth.gsub(/\./,',')
          else

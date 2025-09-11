@@ -62,34 +62,5 @@ module PhlatScript
    end # if version
 
    @@phlatboyzStrings = LanguageHandler.new('PhlatBoyz.strings')
-   
-   class PhlatScriptExtention < SketchupExtension 
-     def initialize
-       super 'Phlatboyz Tools', 'Phlatboyz/Phlatscript.rb' 
-       self.description = 'A set of tools for marking up Phlatland Sketchup drawings and generating CNC g-code.' 
-       self.version = '1.5'   #after 80c0152c599a717cf5aedd9580e9de0dae2b580c
-       
-       #try to find the phrev.dat file, if it exists add the version to the .version
-       #this is purely internal, an ordinary user never sees this
-       vv = Sketchup.find_support_file("phrev.dat", 'Plugins/')
-       if (vv != nil)
-          #read first line from file
-          lines=IO.readlines(vv)
-          vstring = lines[0]
-          self.version += "-" + vstring.strip
-       end
-       
-       self.creator = 'Phlatboyz' 
-       self.copyright = '2017, Phlatboyz' 
-     end
-
-     def load
-          require 'Phlatboyz/Phlatscript.rb'
-          PhlatScript.load
-     end 
-
-   end
-   $PhlatScriptExtension = PhlatScriptExtention.new
-   Sketchup.register_extension($PhlatScriptExtension, true)
 
 end

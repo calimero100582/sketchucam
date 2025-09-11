@@ -69,7 +69,8 @@ module PhlatScript
             end
             }
          groups.each { |g| process_group_918(g) }
-      rescue
+      rescue => e
+          puts e.backtrace
          Sketchup.active_model.abort_operation
          aborted = true
       end

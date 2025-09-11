@@ -1,6 +1,6 @@
 # $Id$
 #need some sort of progress bar, cannot find the dll so just do text in the statusbar
-require ('Phlatboyz/Phlatscript.rb')
+require ('phlatboyz_sketchucam/Phlatboyz/Phlatscript.rb')
 #require 'Win32API'
 
 module PhlatScript

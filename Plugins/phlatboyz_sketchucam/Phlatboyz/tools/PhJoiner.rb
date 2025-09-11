@@ -7,8 +7,8 @@
 # will obey phoptions.usecomments? and not output new comments if false.
 # will not remove existing comments from input files!
 
-require 'Phlatboyz/PhlatTool.rb'
-require 'Phlatboyz/utils/SketchupDirectoryUtils.rb'
+Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/PhlatTool.rb'
+Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/utils/SketchupDirectoryUtils.rb'
 # $Id$
 module PhlatScript
    class JoinerTool < PhlatTool

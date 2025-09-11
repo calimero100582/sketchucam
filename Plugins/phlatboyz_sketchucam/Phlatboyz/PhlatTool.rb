@@ -1,6 +1,6 @@
 # $Id$
 require 'sketchup.rb'
-#require 'Phlatboyz/Constants.rb'
+#Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/Constants.rb'
 
 module PhlatScript
 

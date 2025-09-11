@@ -1,7 +1,7 @@
 # $Id$
 require 'sketchup.rb'
-#require 'Phlatboyz/Constants.rb'
-require 'Phlatboyz/Tools/CenterLineCut.rb'
+#Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/Constants.rb'
+Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/Tools/CenterLineCut.rb'
 
 module PhlatScript
 
@@ -112,7 +112,8 @@ module PhlatScript
     def onUserText(text,view)
       begin
          value = text.to_f
-      rescue
+      rescue => e
+         puts e.backtrace
          # Error parsing the text
          UI.beep
          value = nil

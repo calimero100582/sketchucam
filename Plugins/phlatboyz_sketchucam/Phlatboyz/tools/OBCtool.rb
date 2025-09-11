@@ -1,7 +1,7 @@
 require 'sketchup.rb'
 # David the Swarfer, 2019
-require 'Phlatboyz/PhlatboyzMethods.rb'
-require 'Phlatboyz/PhlatTool.rb'
+Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/PhlatboyzMethods.rb'
+Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/PhlatTool.rb'
 require 'net/http'  #only from Sketchup Make 2014 upwards
 
 module PhlatScript
@@ -48,6 +48,8 @@ module PhlatScript
             res = Net::HTTP.get_response(url)
          rescue Errno::ECONNREFUSED, Timeout::Error, Errno::EINVAL, Errno::ECONNRESET, EOFError,
                 Net::HTTPBadResponse, Net::HTTPHeaderSyntaxError, Net::ProtocolError => e
+            UI.messagebox(e.message)
+            puts e.backtrace
             return false
             #puts "rescued - OB server not found at #{server}"
             #exit

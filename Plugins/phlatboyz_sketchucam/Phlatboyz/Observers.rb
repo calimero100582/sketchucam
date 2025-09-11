@@ -1,6 +1,5 @@
 
-#require 'Phlatboyz/Constants.rb'
-require 'Phlatboyz/PSUpgrade.rb'
+Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/PSUpgrade.rb'
 
 module PhlatScript
 

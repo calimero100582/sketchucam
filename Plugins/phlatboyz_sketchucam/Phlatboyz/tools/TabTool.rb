@@ -1,8 +1,8 @@
 
 require 'sketchup.rb'
-#require 'Phlatboyz/Constants.rb'
-require 'Phlatboyz/PhlatTool.rb'
-require 'Phlatboyz/tools/TabCut.rb'
+#Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/Constants.rb'
+Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/PhlatTool.rb'
+Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/tools/TabCut.rb'
 
 module PhlatScript
 

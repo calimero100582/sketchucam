@@ -1,6 +1,6 @@
 
-require 'Phlatboyz/PhlatCut.rb'
-require 'Phlatboyz/Tools/CenterLineCut.rb'
+Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/PhlatCut.rb'
+Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/Tools/CenterLineCut.rb'
 
 module PhlatScript
 
@@ -27,7 +27,8 @@ module PhlatScript
       view.line_width = 5.0
       begin
         edges.each { |e| view.draw_line(e.start.position, e.end.position) }
-      rescue
+      rescue => e
+          puts e.backtrace
 #        UI.messagebox "Exception in Fold preview "+$!
       end
     end

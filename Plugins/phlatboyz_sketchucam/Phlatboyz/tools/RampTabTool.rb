@@ -1,6 +1,6 @@
 require 'sketchup.rb'
-require 'Phlatboyz/PhlatTool.rb'
-require 'Phlatboyz/utils/SketchupDirectoryUtils.rb'
+Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/PhlatTool.rb'
+Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/utils/SketchupDirectoryUtils.rb'
 # $Id: HelpTool.rb 57 2014-07-27 16:18:12Z swarfer@gmail.com $
 module PhlatScript
 

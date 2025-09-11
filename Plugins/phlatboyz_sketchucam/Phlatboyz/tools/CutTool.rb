@@ -1,9 +1,9 @@
 
 require 'sketchup.rb'
-#require 'Phlatboyz/Constants.rb'
-require 'Phlatboyz/PhlatEdge.rb'
-require 'Phlatboyz/PhlatOffset.rb'
-require 'Phlatboyz/tools/OffsetCut.rb'
+#Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/Constants.rb'
+Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/PhlatEdge.rb'
+Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/PhlatOffset.rb'
+Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/tools/OffsetCut.rb'
 =begin
    swarfer: added .center back to phlatarc entities so that gcodeutil can output X Y I J format arcs
    in the hope of solving the issues around R format when arcs are very small, which happens when using the

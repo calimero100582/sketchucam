@@ -1,7 +1,7 @@
 #plungeTool and CSinkTool
 require 'sketchup.rb'
-#require 'Phlatboyz/Constants.rb'
-require 'Phlatboyz/Tools/PlungeCut.rb'
+#Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/Constants.rb'
+Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/Tools/PlungeCut.rb'
 
 module PhlatScript
 
@@ -9,7 +9,8 @@ module PhlatScript
     @depth = '100.0'.to_f
     begin
        @dia = "0.0".to_l
-    rescue
+    rescue => error
+      puts error.backtrace
        @dia = '0'.to_l
     end
     @keyflag = 0
@@ -80,6 +81,7 @@ module PhlatScript
             return false
          end
       rescue ArgumentError => error
+         puts error.backtrace
          UI.messagebox(error.message)
          retry
       end
@@ -94,6 +96,7 @@ module PhlatScript
             dia = '0'.to_l
          end
       rescue ArgumentError => error
+         puts error.backtrace
          UI.messagebox(error.message)
          retry
       end         
@@ -267,6 +270,7 @@ module PhlatScript
       begin
          input = UI.inputbox(prompts, defaults, list, 'Counter Sink options')
       rescue ArgumentError => error
+         puts error.backtrace
          UI.messagebox(error.message)
          retry
       end

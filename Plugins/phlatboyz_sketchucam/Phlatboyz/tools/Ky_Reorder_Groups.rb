@@ -28,7 +28,7 @@ History:
 =end
 
 require 'sketchup.rb'
-require 'Phlatboyz/PhlatCut.rb'
+Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/PhlatCut.rb'
 
 module PhlatScript
    class Ky_Reorder_Groups < PhlatTool

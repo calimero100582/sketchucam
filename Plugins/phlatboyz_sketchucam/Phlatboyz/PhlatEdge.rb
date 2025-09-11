@@ -1,7 +1,7 @@
 
 require "sketchup.rb"
-require 'Phlatboyz/Tools/GcodeUtil.rb'
-require 'Phlatboyz/PhlatCut.rb'
+Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/Tools/GcodeUtil.rb'
+Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/PhlatCut.rb'
 
 module PhlatScript    
 

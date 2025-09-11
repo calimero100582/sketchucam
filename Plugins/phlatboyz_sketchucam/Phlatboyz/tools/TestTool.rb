@@ -1,6 +1,6 @@
 require 'sketchup.rb'
-require 'Phlatboyz/PhlatTool.rb'
-require 'Phlatboyz/PhlatProgress.rb'
+Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/PhlatTool.rb'
+Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/PhlatProgress.rb'
 
 module PhlatScript
 

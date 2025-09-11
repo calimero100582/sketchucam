@@ -1,4 +1,4 @@
-require 'Phlatboyz/PhlatTool.rb'
+Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/PhlatTool.rb'
 
 # May 2015 - make sure bitdiameter cannot be set to 0, set precision to allow for enough digits
 #            also range check stepover% to 1..100
@@ -161,7 +161,7 @@ module PhlatScript
       wd.setCaption('commenttext_id', PhlatScript.getString("Comment Remarks"))
       wd.execute_script("setEncodedFormValue('commenttext','"+PhlatScript.commentText+"','$/')")
 
-      wd.setCaption('version_id', 'SketchUcam V' + $PhlatScriptExtension.version)
+      wd.setCaption('version_id', 'SketchUcam V' + Sketchup.extensions["Phlatboyz Tools"].version)
     end
 
     def saveValues(wd)  # put values from webdialog into phlatscript variables
@@ -319,10 +319,12 @@ module PhlatScript
          begin
             input = UI.inputbox(prompts, defaults, list, PhlatScript.getString("Parameters"))
          rescue ArgumentError => error
+            puts error.backtrace
             UI.messagebox(error.message)
             retry
          end
          # input is nil if user cancelled
+         puts input
          if (input)
             PhlatScript.spindleSpeed = input[0].to_i
             PhlatScript.feedRate    = Sketchup.parse_length(input[1]).to_f
@@ -386,6 +388,7 @@ module PhlatScript
         params_dialog.set_size(width, height)
         params_dialog.add_action_callback("phlatboyz_action_callback") do | web_dialog, action_name |
           model = Sketchup.active_model
+          puts 'loading dialog'
           if(action_name == 'load_params')
             setValues(web_dialog)
           elsif(action_name == 'save')
@@ -455,7 +458,7 @@ module PhlatScript
           @dialogIsOpen = false
         }
 
-        set_param_web_dialog_file = Sketchup.find_support_file "setParamsWebDialog.html", "Plugins/Phlatboyz/html"
+        set_param_web_dialog_file = Sketchup.find_support_file("setParamsWebDialog.html", "Plugins/phlatboyz_sketchucam/Phlatboyz/html")
         if (set_param_web_dialog_file and (not @dialogIsOpen))
           params_dialog.set_file(set_param_web_dialog_file)
           @dialogIsOpen = true

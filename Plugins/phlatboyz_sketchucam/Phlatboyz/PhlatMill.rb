@@ -1,5 +1,4 @@
 require 'sketchup.rb'
-# require 'Phlatboyz/Constants.rb'
 # see note at end of file
 module PhlatScript
    RAMPMULT = 5    # rampdist = bitdiam * RAMPMULT
@@ -224,7 +223,7 @@ module PhlatScript
          cncPrint("%\n")
          # do a little jig to prevent the code highlighter getting confused by the bracket constructs
          vs1 = PhlatScript.getString('PhlatboyzGcodeTrailer')
-         vs2 = $PhlatScriptExtension.version
+         vs2 = Sketchup.extensions["Phlatboyz Tools"].version
          verstr = (vs1 % vs2).to_s + "\n"
          cncPrintC(verstr)
          if PhlatScript.sketchup_file

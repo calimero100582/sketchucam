@@ -1,5 +1,5 @@
 # $Id$
-require 'Phlatboyz/Phlatscript.rb'
+Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/Phlatscript.rb'
 
 module PhlatScript
 

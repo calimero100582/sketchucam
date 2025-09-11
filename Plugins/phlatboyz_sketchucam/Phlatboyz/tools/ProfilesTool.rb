@@ -1,7 +1,7 @@
-require 'Phlatboyz/PhlatTool.rb'
-require 'Phlatboyz/utils/SketchupDirectoryUtils.rb'
+Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/PhlatTool.rb'
+Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/utils/SketchupDirectoryUtils.rb'
 
-require('Phlatboyz/utils/IniParser.rb')
+require('phlatboyz_sketchucam/Phlatboyz/utils/IniParser.rb')
 
 # $Id$
 module PhlatScript

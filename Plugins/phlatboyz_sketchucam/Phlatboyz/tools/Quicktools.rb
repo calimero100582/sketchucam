@@ -1,6 +1,6 @@
 # QuickTools - some tools to allow quick changing of some options, only on quick toolbar.
 
-require 'Phlatboyz/PhlatTool.rb'
+Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/PhlatTool.rb'
 
 module PhlatScript
    # Turn comments on or off
@@ -116,6 +116,7 @@ class FourthAxisTool < PhlatTool
          begin
             input=UI.inputbox(prompts, defaults, list, 'Rotation options')
          rescue ArgumentError => error
+            puts error.backtrace
             UI.messagebox(error.message)
             retry
          end
@@ -189,6 +190,7 @@ class ToolChangeTool < PhlatTool
          begin
             input=UI.inputbox(prompts, defaults, list, 'Tool Change options')
          rescue ArgumentError => error
+            puts error.backtrace
             UI.messagebox(error.message)
             retry
          end
