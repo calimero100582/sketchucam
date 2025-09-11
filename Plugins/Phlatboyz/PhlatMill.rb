@@ -25,6 +25,8 @@ module PhlatScript
          @depthfirst = $phoptions.depth_first? # depth first is old way, false gives diam first, spiralout()
          @fastapproach = true
          @laser = PhlatScript.useLaser? # frikken lasers!
+         @laserCustomPlunge = PhlatScript.laserCustomPlunge # custom plunge
+         @laserCustomRetract = PhlatScript.laserCustomRetract # custom retract
          @laser_grbl_mode = $phoptions.laser_GRBL_mode? # affects how holes are coded
          @laser_power_mode = $phoptions.laser_power_mode? # M4 if true, M3 is false
          @cboreinner = 0 # diameter of inner hole for counterbores
@@ -476,7 +478,7 @@ module PhlatScript
                hasy = true
             end
 
-            if @laser # then set PWM power if changed
+            if @laser && @laserCustomPlunge.empty? # then set PWM power if changed
                # calculate 'laser brightness' as a percentage of material thickness
                # if multipass then use full power, else scale to Z depth
                depth = laserbright(zo)
@@ -543,7 +545,12 @@ module PhlatScript
             end
             command_out = ''
             if @laser
-               command_out += 'M05'
+               if !@laserCustomRetract.empty?
+                  @laserCustomRetract.split(/\$\//).each{|line| command_out += line + "\n"}
+                  command_out = command_out.strip
+               else
+                  command_out += 'M05'
+               end
                cmd = 'M05' # force output of motion command at next move
             else
                if @Limit_up_feed && (cmd == 'G0') && (zo > 0) && (@cz < 0)
@@ -592,11 +599,16 @@ module PhlatScript
             end
             command_out = ''
             if @laser
-               # calculate 'laser brightness' as a percentage of material thickness
-               depth = laserbright(zo)
-               cmd = @laser_power_mode ? 'M04' : 'M03'
-               cncPrint(cmd + ' S', depth.abs.to_i)
-               so = 3.14 # make sure feed rate gets output on next move
+               if !@laserCustomPlunge.empty?
+                  @laserCustomPlunge.split(/\$\//).each{|line| command_out += line + "\n"}
+                  command_out = command_out.strip
+               else
+                  # calculate 'laser brightness' as a percentage of material thickness
+                  depth = laserbright(zo)
+                  cmd = @laser_power_mode ? 'M04' : 'M03'
+                  cncPrint(cmd + ' S', depth.abs.to_i)
+                  so = 3.14 # make sure feed rate gets output on next move
+               end
                cmd = 'm3' # force output of motion commands at next move
             else
                # if above material, G00 to near surface, fastapproach

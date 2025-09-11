@@ -51,6 +51,8 @@ module PhlatScript
          @default_safe_height    =  PhlatScript.conformat(phoptions.default_safe_height)
          @default_overhead_gantry =  (phoptions.default_overhead_gantry? ? '1' : '0')
          @default_laser           =  (phoptions.default_laser? ? '1' : '0')
+         @default_laser_custom_plunge = phoptions.default_laser_custom_plunge.to_s
+         @default_laser_custom_retract = phoptions.default_laser_custom_retract.to_s
          @default_multipass      =   (phoptions.default_multipass? ? '1' : '0')
          @default_multipass_depth =  PhlatScript.conformat(phoptions.default_multipass_depth)
          @default_stepover       =   phoptions.default_stepover.to_i.to_s
@@ -125,6 +127,8 @@ module PhlatScript
          @default_safe_height = Default_safe_height
          @default_overhead_gantry = Default_overhead_gantry
          @default_laser = false
+         @default_laser_custom_plunge = Default_laser_custom_plunge
+         @default_laser_custom_retract = Default_laser_custom_retract
          @default_multipass = Default_multipass
          @default_multipass_depth = Default_multipass_depth
          @default_stepover = Default_stepover
@@ -242,6 +246,8 @@ module PhlatScript
             value = -1
             value = getvalue(optin['default_laser'])                if (optin.has_key?('default_laser'))
             @default_laser = value > 0 ? true :  false              if (value != -1)
+            @default_laser_custom_plunge = optin['default_laser_custom_plunge']  if (optin.has_key?('default_laser_custom_plunge'))
+            @default_laser_custom_retract = optin['default_laser_custom_retract']  if (optin.has_key?('default_laser_custom_retract'))
 
             # Default_multipass = false
             value = -1
@@ -622,6 +628,20 @@ module PhlatScript
       end
       def default_laser=(newval)
          @default_laser = newval
+      end
+      
+      def default_laser_custom_plunge
+         @default_laser_custom_plunge
+      end
+      def default_laser_custom_plunge=(newremark)
+         @default_laser_custom_plunge = newremark
+      end
+      
+      def default_laser_custom_retract
+         @default_laser_custom_retract
+      end
+      def default_laser_custom_retract=(newremark)
+         @default_laser_custom_retract = newremark
       end
 
       def default_multipass?

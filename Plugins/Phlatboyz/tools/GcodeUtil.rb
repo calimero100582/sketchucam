@@ -741,6 +741,7 @@ module PhlatScript
                end
             end
          else ## if not multipass, just cut em
+            # TODO PLD loop start here
             puts "mln#{@level}: JUST CUT EM, NOTMULTI #{loopNode.sorted_cuts.length}" if debugmln
             unless millEdges(aMill, loopNode.sorted_cuts, material_thickness)
                raise 'milledges failed'
@@ -1597,6 +1598,15 @@ module PhlatScript
                   puts "pass #{pass}\n" if backtack
                   aMill.cncPrintC("Pass: #{pass}") if PhlatScript.useMultipass? && printPass
                   ecnt = 0
+
+                  spiral_in = false
+                  spiral_g3 = false
+                  spiral_diameter = 0.75
+                  spiral_cx = 0
+                  spiral_cy = 0
+                  spiral_px = 0
+                  spiral_py = 0
+
                   edges.each do |phlatcut|
                      ecnt += 1
                      prog.update(ecnt)
@@ -1761,8 +1771,34 @@ module PhlatScript
                                     end
                                  end # if else plungcut
                               else # NOT multipass
+                                 # TODO PLD Spiral in/out
                                  aMill.retract(@safeHeight)
-                                 aMill.move(point.x, point.y)
+
+                                 if (phlatcut.class == PhlatScript::InsideCut) && PhlatScript.useLaser? && (phlatcut.is_a? PhlatArc) && phlatcut.is_arc?
+                                    spiral_g3 = reverse ? !phlatcut.g3? : phlatcut.g3?
+                                    cutkind = phlatcut.class                                                    
+                                    puts "reverse #{reverse} .g3 #{phlatcut.g3?} cutkind=#{cutkind}  ===  g3=#{spiral_g3}"  if @debug
+   
+                                    center = phlatcut.center
+                                    unless (center.x != 0.0) && (center.y != 0.0)
+                                       raise 'ARC HAS NO CENTER, PLEASE RECODE THIS FILE'
+                                    end
+                                    tcenter = (trans ? center.transform(trans) : center) # transform if needed
+                                    # v1.5 - only feedadjust on outside arcs if they are inside a shape
+                                    fawas = dofeedadjust(phlatcut.class, spiral_g3)
+
+                                    spiral_in = true
+                                    spiral_diameter = [0.75, phlatcut.radius].min
+                                    spiral_px = point.x + (tcenter.x - point.x) * spiral_diameter / phlatcut.radius
+                                    spiral_py = point.y + (tcenter.y - point.y) * spiral_diameter / phlatcut.radius
+                                    spiral_cx = (spiral_px + point.x) / 2
+                                    spiral_cy = (spiral_py + point.y) / 2
+                                    aMill.move(spiral_px, spiral_py)
+                                    aMill.plung(cut_depth, PhlatScript.plungeRate)
+                                    aMill.arcmoveij(point.x, point.y, spiral_cx, spiral_cy, spiral_diameter / 2, spiral_g3, cut_depth)
+                                 else
+                                    aMill.move(point.x, point.y)
+                                 end
                                  if phlatcut.is_a? PlungeCut
                                     # puts "plunge #{phlatcut}"
                                     # puts "   plunge dia #{phlatcut.diameter}"
@@ -1817,6 +1853,11 @@ module PhlatScript
                         save_point = point.nil? ? nil : Geom::Point3d.new(point.x, point.y, cut_depth)
                      end
                   end # edges.each
+
+                  if spiral_in
+                     aMill.arcmoveij(spiral_px, spiral_py, spiral_cx, spiral_cy, spiral_diameter / 2, spiral_g3, cut_depth)
+                  end
+
                   if pass > ((material_thickness / PhlatScript.multipassDepth) + 2) # just in case it runs away, mainly debugging
                      aMill.cncPrintC("BREAK pass #{pass}")
                      puts "BREAK large pass #{pass}\n"

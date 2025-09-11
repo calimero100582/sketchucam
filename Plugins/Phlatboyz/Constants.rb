@@ -63,6 +63,8 @@ Default_safe_origin_y = 0.0.inch
 Default_safe_width = 42.0.inch
 Default_safe_height = 22.0.inch
 Default_comment_remark = ""
+Default_laser_custom_plunge = ""
+Default_laser_custom_retract = ""
 
 Default_overhead_gantry = false
 Default_multipass = false
@@ -132,6 +134,8 @@ Dict_multipass_depth = "multipass_depth"
 Dict_overhead_gantry = "overhead_gantry"
 Dict_laser = "laser"
 Dict_lasermode = "lasermode"
+Dict_custom_plunge = "laserCustomPlunge"
+Dict_custom_retract = "laserCustomRetract"
 Dict_gen3d = "gen3D"
 Dict_stepover = "stepover"
 Dict_construction_mark = "construction_mark"

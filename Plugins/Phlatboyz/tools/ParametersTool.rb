@@ -127,6 +127,13 @@ module PhlatScript
          wd.setCaption('laser_id', PhlatScript.getString("Laser Control"))
       end
       wd.execute_script("setCheckbox('laser','"+PhlatScript.useLaser?.inspect()+"')")
+
+      wd.setCaption('laserCustomPlunge_id', PhlatScript.getString("Custom Plunge"))
+      wd.execute_script("setEncodedFormValue('laserCustomPlunge','"+PhlatScript.laserCustomPlunge+"','$/')")
+
+      wd.setCaption('laserCustomRetract_id', PhlatScript.getString("Custom Retract"))
+      wd.execute_script("setEncodedFormValue('laserCustomRetract','"+PhlatScript.laserCustomRetract+"','$/')")
+
       #set the metric flag in the form
       wd.setValue('metric_hidden',PhlatScript.isMetric.inspect())
 
@@ -213,6 +220,16 @@ module PhlatScript
       end
 
       
+      laserCustomPlunge = wd.get_element_value("laserCustomPlunge").delete("'\"")
+      encoded_laserCustomPlunge = ""
+      laserCustomPlunge.each_line { |line| encoded_laserCustomPlunge += line.chomp()+"$/"}
+      PhlatScript.laserCustomPlunge = encoded_laserCustomPlunge.chop().chop()
+      
+      laserCustomRetract = wd.get_element_value("laserCustomRetract").delete("'\"")
+      encoded_laserCustomRetract = ""
+      laserCustomRetract.each_line { |line| encoded_laserCustomRetract += line.chomp()+"$/"}
+      PhlatScript.laserCustomRetract = encoded_laserCustomRetract.chop().chop()
+      
       comment_text = wd.get_element_value("commenttext").delete("'\"")
       encoded_comment_text = ""
       comment_text.each_line { |line| encoded_comment_text += line.chomp()+"$/"}
@@ -252,7 +269,9 @@ module PhlatScript
          prompts.push("Comment Remarks")
 
         # default values
-         encoded_comment_text = PhlatScript.commentText.to_s
+        encoded_laserCustomPlunge = PhlatScript.laserCustomPlunge.to_s
+        encoded_laserCustomRetract = PhlatScript.laserCustomRetract.to_s
+        encoded_comment_text = PhlatScript.commentText.to_s
 
          defaults = [PhlatScript.spindleSpeed.to_s,
              Sketchup.format_length(PhlatScript.feedRate),
@@ -342,7 +361,7 @@ module PhlatScript
       else #---------------------------webdialog--------------------------------------------
         view = model.active_view
         width = 600
-        height = 715
+        height = 790
         x = (view.vpwidth - width)/2
         y = (view.vpheight - height)/2
         x = 0 if x < 0
@@ -390,6 +409,8 @@ module PhlatScript
             web_dialog.setValue('tabdepthfactor', $phoptions.default_tab_depth_factor)
 
             web_dialog.setValue('commenttext', $phoptions.default_comment_remark)
+            web_dialog.setValue('laserCustomPlunge', $phoptions.default_laser_custom_plunge)
+            web_dialog.setValue('laserCustomRetract', $phoptions.default_laser_custom_retract)
             web_dialog.execute_script("setCheckbox('overheadgantry','"+ $phoptions.default_overhead_gantry?.inspect()+"')")
             web_dialog.execute_script("setCheckbox('laser','"+          $phoptions.default_laser?.inspect()+"')")
             web_dialog.execute_script("setCheckbox('multipass','"+      $phoptions.default_multipass?.inspect()+"')")
