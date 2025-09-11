@@ -128,6 +128,9 @@ module PhlatScript
       end
       wd.execute_script("setCheckbox('laser','"+PhlatScript.useLaser?.inspect()+"')")
 
+      wd.setCaption('laserApproachDiameter_id', PhlatScript.getString("Approach Diameter"))
+      wd.setValue('laserApproachDiameter', format_length(PhlatScript.laserApproachDiameter))
+
       wd.setCaption('laserCustomPlunge_id', PhlatScript.getString("Custom Plunge"))
       wd.execute_script("setEncodedFormValue('laserCustomPlunge','"+PhlatScript.laserCustomPlunge+"','$/')")
 
@@ -219,6 +222,7 @@ module PhlatScript
          PhlatScript.gen3D = false           # cant do this either
       end
 
+      PhlatScript.laserApproachDiameter = Sketchup.parse_length(wd.get_element_value("laserApproachDiameter"))
       
       laserCustomPlunge = wd.get_element_value("laserCustomPlunge").delete("'\"")
       encoded_laserCustomPlunge = ""
@@ -254,7 +258,10 @@ module PhlatScript
                PhlatScript.getString("Safe Length"),
                PhlatScript.getString("Safe Width"),
                PhlatScript.getString("Overhead Gantry"),
-               PhlatScript.getString("Laser control")      ]               
+               PhlatScript.getString("Laser control") ,
+               PhlatScript.getString("Approach Diameter") ,
+               PhlatScript.getString("Custom Plunge") ,
+               PhlatScript.getString("Custom Retract")      ]               
 
 #         if PhlatScript.multipassEnabled?
             prompts.push(PhlatScript.getString("Generate Multipass"))
@@ -285,7 +292,10 @@ module PhlatScript
              Sketchup.format_length(PhlatScript.safeWidth),
              Sketchup.format_length(PhlatScript.safeHeight),
              PhlatScript.useOverheadGantry?.inspect(),
-             PhlatScript.useLaser?.inspect()             
+             PhlatScript.useLaser?.inspect(),
+             Sketchup.format_length(PhlatScript.laserApproachDiameter),
+             encoded_laserCustomPlunge,
+             encoded_laserCustomRetract
              ]
 
 #         if PhlatScript.multipassEnabled?
@@ -302,7 +312,7 @@ module PhlatScript
 
          # dropdown options can be added here
 #         if PhlatScript.multipassEnabled?
-            list = ["","","","","","","","","","","","false|true","false|true","false|true","","false|true","","false|true","false|true","false|true","",""]
+            list = ["","","","","","","","","","","","false|true","false|true","","","","false|true","","false|true","","false|true","false|true","false|true","",""]
 #         else
 #            list = ["","","","","","","","","","","","false|true","false|true","","false|true","false|true","false|true","",""]
 #         end
@@ -330,24 +340,28 @@ module PhlatScript
             PhlatScript.safeWidth = Sketchup.parse_length(input[9])
             PhlatScript.safeHeight = Sketchup.parse_length(input[10])
             PhlatScript.useOverheadGantry = (input[11] == 'true')
-            PhlatScript.useLaser = (input[12] == 'true')            
+            PhlatScript.useLaser = (input[12] == 'true')   
+            
+            PhlatScript.laserApproachDiameter = Sketchup.parse_length(input[13])
+            PhlatScript.laserCustomPlunge = input[14].to_s
+            PhlatScript.laserCustomRetract = input[15].to_s
 
 #            if PhlatScript.multipassEnabled?
-               PhlatScript.useMultipass = (input[13] == 'true')
-               tmp = Sketchup.parse_length(input[14]).to_f
+               PhlatScript.useMultipass = (input[16] == 'true')
+               tmp = Sketchup.parse_length(input[17]).to_f
                if (tmp > 0)
                   PhlatScript.multipassDepth = tmp
                end
-               PhlatScript.gen3D = (input[15] == 'true')
-               tmp = input[16].to_f
+               PhlatScript.gen3D = (input[18] == 'true')
+               tmp = input[19].to_f
                if (tmp > 0) && (tmp <= 100)
                   PhlatScript.stepover = tmp
                end
-               PhlatScript.showGplot = (input[17] == 'true')
-               PhlatScript.tabletop = (input[18] == 'true')
-               PhlatScript.mustramp = (input[19] == 'true')
-               PhlatScript.rampangle = input[20].to_f
-               PhlatScript.commentText = input[21].to_s
+               PhlatScript.showGplot = (input[20] == 'true')
+               PhlatScript.tabletop = (input[21] == 'true')
+               PhlatScript.mustramp = (input[22] == 'true')
+               PhlatScript.rampangle = input[23].to_f
+               PhlatScript.commentText = input[24].to_s
 #            else
 #               PhlatScript.gen3D = (input[12] == 'true')
 #               PhlatScript.stepover = input[13].to_f
@@ -361,7 +375,7 @@ module PhlatScript
       else #---------------------------webdialog--------------------------------------------
         view = model.active_view
         width = 600
-        height = 790
+        height = 795
         x = (view.vpwidth - width)/2
         y = (view.vpheight - height)/2
         x = 0 if x < 0
@@ -391,6 +405,7 @@ module PhlatScript
                web_dialog.setValue('safewidth', $phoptions.default_safe_width.to_mm)
                web_dialog.setValue('safeheight', $phoptions.default_safe_height.to_mm)
                web_dialog.setValue('multipassdepth', $phoptions.default_multipass_depth.to_mm)
+               web_dialog.setValue('laserApproachDiameter', $phoptions.default_laserApproachDiameter.to_mm)
             else
                web_dialog.setValue('feedrate', $phoptions.default_feed_rate)
                web_dialog.setValue('plungerate', $phoptions.default_plunge_rate)
@@ -401,6 +416,7 @@ module PhlatScript
                web_dialog.setValue('safewidth', $phoptions.default_safe_width)
                web_dialog.setValue('safeheight', $phoptions.default_safe_height)
                web_dialog.setValue('multipassdepth', $phoptions.default_multipass_depth)
+               web_dialog.setValue('laserApproachDiameter', $phoptions.default_laserApproachDiameter)
             end
             #these things are dimensionless
             web_dialog.setValue('stepover',$phoptions.default_stepover)
@@ -409,8 +425,8 @@ module PhlatScript
             web_dialog.setValue('tabdepthfactor', $phoptions.default_tab_depth_factor)
 
             web_dialog.setValue('commenttext', $phoptions.default_comment_remark)
-            web_dialog.setValue('laserCustomPlunge', $phoptions.default_laser_custom_plunge)
-            web_dialog.setValue('laserCustomRetract', $phoptions.default_laser_custom_retract)
+            web_dialog.setValue('laserCustomPlunge', $phoptions.default_laserCustomPlunge)
+            web_dialog.setValue('laserCustomRetract', $phoptions.default_laserCustomRetract)
             web_dialog.execute_script("setCheckbox('overheadgantry','"+ $phoptions.default_overhead_gantry?.inspect()+"')")
             web_dialog.execute_script("setCheckbox('laser','"+          $phoptions.default_laser?.inspect()+"')")
             web_dialog.execute_script("setCheckbox('multipass','"+      $phoptions.default_multipass?.inspect()+"')")

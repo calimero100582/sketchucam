@@ -1788,7 +1788,7 @@ module PhlatScript
                                     fawas = dofeedadjust(phlatcut.class, spiral_g3)
 
                                     spiral_in = true
-                                    spiral_diameter = [0.75, phlatcut.radius].min
+                                    spiral_diameter = [PhlatScript.laserApproachDiameter, phlatcut.radius].min
                                     spiral_px = point.x + (tcenter.x - point.x) * spiral_diameter / phlatcut.radius
                                     spiral_py = point.y + (tcenter.y - point.y) * spiral_diameter / phlatcut.radius
                                     spiral_cx = (spiral_px + point.x) / 2

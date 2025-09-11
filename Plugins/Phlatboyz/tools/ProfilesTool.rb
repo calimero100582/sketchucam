@@ -62,6 +62,11 @@ class ProfileSettings < Hashable
       @prof_toolh   = $phoptions.toolh.to_i.to_s
       @prof_toolfile = $phoptions.toolfile
       @prof_tooloffset = PhlatScript.conformat($phoptions.tooloffset)
+
+      @prof_useLaser = PhlatScript.useLaser? ? '1' : '0'
+      @prof_laserApproachDiameter = PhlatScript.conformat(PhlatScript.laserApproachDiameter)
+      @prof_laserCustomPlunge = PhlatScript.laserCustomPlunge
+      @prof_laserCustomRetract = PhlatScript.laserCustomRetract
    end
 end
 #-----------------------------------------------------------------------------
@@ -329,6 +334,11 @@ class ProfilesLoadTool < ProfilesTool
             $phoptions.tooloffset = getvalue(profile['prof_tooloffset'])       if (profile.has_key?('prof_tooloffset'))
          #puts "$phoptions.tooloffset #{$phoptions.tooloffset} #{$phoptions.tooloffset.class}"
 
+            PhlatScript.useLaser = profile.has_key?('prof_useLaser') && getvalue(profile['prof_useLaser']) > 0 ? true : false
+            PhlatScript.laserApproachDiameter = profile.has_key?('prof_laserApproachDiameter') ? getvalue(profile['prof_laserApproachDiameter']) : ''
+            PhlatScript.laserCustomPlunge = profile.has_key?('prof_laserCustomPlunge') ? profile['prof_laserCustomPlunge'] : ''
+            PhlatScript.laserCustomRetract = profile.has_key?('prof_laserCustomRetract') ? profile['prof_laserCustomRetract'] : ''
+            
             PhlatScript.commentText = "Loaded profile #{input[0]}"
             puts "Loaded profile '#{input[0]}' from ini"
 

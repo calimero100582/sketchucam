@@ -329,20 +329,28 @@ module PhlatScript
     Sketchup.active_model.set_attribute(Dict_name, Dict_laser, og)
   end
 
+  def PhlatScript.laserApproachDiameter
+    Sketchup.active_model.get_attribute(Dict_name, Dict_laserApproachDiameter, $phoptions.default_laserApproachDiameter)
+  end
+
+  def PhlatScript.laserApproachDiameter=(lApproachDiameter)
+    Sketchup.active_model.set_attribute(Dict_name, Dict_laserApproachDiameter, lApproachDiameter)
+  end
+
   def PhlatScript.laserCustomPlunge
-    Sketchup.active_model.get_attribute(Dict_name, Dict_custom_plunge, $phoptions.default_laser_custom_plunge).to_s
+    Sketchup.active_model.get_attribute(Dict_name, Dict_laserCustomPlunge, $phoptions.default_laserCustomPlunge).to_s
   end
 
   def PhlatScript.laserCustomPlunge=(ctext)
-    Sketchup.active_model.set_attribute(Dict_name, Dict_custom_plunge, ctext)
+    Sketchup.active_model.set_attribute(Dict_name, Dict_laserCustomPlunge, ctext)
   end
 
   def PhlatScript.laserCustomRetract
-    Sketchup.active_model.get_attribute(Dict_name, Dict_custom_retract, $phoptions.default_laser_custom_retract).to_s
+    Sketchup.active_model.get_attribute(Dict_name, Dict_laserCustomRetract, $phoptions.default_laserCustomRetract).to_s
   end
 
   def PhlatScript.laserCustomRetract=(ctext)
-    Sketchup.active_model.set_attribute(Dict_name, Dict_custom_retract, ctext)
+    Sketchup.active_model.set_attribute(Dict_name, Dict_laserCustomRetract, ctext)
   end
 
   # vastly increases large file load time if this is true, default for 1.4a
