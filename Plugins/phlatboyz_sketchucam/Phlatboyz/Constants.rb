@@ -81,7 +81,7 @@ Default_tabletop = false
 # do not edit this
 #           Cursor image files
 # - - - - - - - - - - - - - - - - -
-Cursor_directory = "Plugins/Phlatboyz/images"
+Cursor_directory = "Plugins/phlatboyz_sketchucam/Phlatboyz/images"
 Cursor_tab_tool = "cursor_tabtool.png"
 Cursor_vtab_tool = "cursor_vtabtool.png"
 Cursor_inside_cuttool_filename = "cursor_cuttool_inside.png"

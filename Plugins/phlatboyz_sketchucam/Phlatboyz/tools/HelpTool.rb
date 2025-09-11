@@ -5,7 +5,7 @@ module PhlatScript
 
   class HelpTool < PhlatTool
     def select
-      help_file = Sketchup.find_support_file "help.html", "Plugins/Phlatboyz/html"
+      help_file = Sketchup.find_support_file "help.html", "Plugins/phlatboyz_sketchucam/Phlatboyz/html"
       if (help_file)
         # Open the help_file in a web browser
         UI.openURL "file://" + help_file
