@@ -4,9 +4,9 @@
 # Menu Item   :   
 # Context Menu:   
 # Usage       :   install in plugins folder
-# Date        :   Feb 2014, 2017
+# Date        :   Feb 2014, 2021, Dec2022
 # Type        :   
-# Version     :   SketchUcam 1.5 
+# Version     :   SketchUcam 1.5c 
 # $Id$
 #-----------------------------------------------------------------------------
 

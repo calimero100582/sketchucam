@@ -1,4 +1,5 @@
 # $Id$
+# $Id$
 require('sketchup.rb')
 require('extensions.rb')
 require('phlatboyz_sketchucam/Phlatboyz/Constants.rb')
@@ -285,13 +286,21 @@ module PhlatScript
   def PhlatScript.useOverheadGantry=(og)
     Sketchup.active_model.set_attribute(Dict_name, Dict_overhead_gantry, og)
   end
-
+#laser mode
   def PhlatScript.useLaser?
     Sketchup.active_model.get_attribute(Dict_name, Dict_laser, $phoptions.default_laser?)
   end
 
   def PhlatScript.useLaser=(og)
     Sketchup.active_model.set_attribute(Dict_name, Dict_laser, og)
+  end
+#servo pen
+  def PhlatScript.useServo?
+    Sketchup.active_model.get_attribute(Dict_name, Dict_servo, $phoptions.default_servo?)
+  end
+
+  def PhlatScript.useServo=(og)
+    Sketchup.active_model.set_attribute(Dict_name, Dict_servo, og)
   end
 
   def PhlatScript.laserApproachDiameter
@@ -527,6 +536,7 @@ module PhlatScript
        addToolItem( OptionsFeatTool.new($phoptions) , optionssubmenu)
        addToolItem( OptionsFeat2Tool.new($phoptions) , optionssubmenu)
        addToolItem( OptionsFilesTool.new($phoptions) , optionssubmenu)
+       addToolItem( OptionsServoTool.new($phoptions) , optionssubmenu)
     @@phlatboyz_tools_submenu.add_separator
 
     Sketchup.require 'phlatboyz_sketchucam/Phlatboyz/tools/CutTool.rb'

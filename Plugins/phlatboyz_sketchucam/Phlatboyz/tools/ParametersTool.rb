@@ -117,6 +117,7 @@ module PhlatScript
 
       wd.setCaption('overheadgantry_id', PhlatScript.getString("Overhead Gantry"))
       wd.execute_script("setCheckbox('overheadgantry','"+PhlatScript.useOverheadGantry?.inspect()+"')")
+      #laser
       if ($phoptions.laser_GRBL_mode?)
          if ($phoptions.laser_power_mode?)
             wd.setCaption('laser_id', PhlatScript.getString("Laser Control") + " (GRBL PWR)")
@@ -127,6 +128,9 @@ module PhlatScript
          wd.setCaption('laser_id', PhlatScript.getString("Laser Control"))
       end
       wd.execute_script("setCheckbox('laser','"+PhlatScript.useLaser?.inspect()+"')")
+      #servo
+      wd.setCaption('servo_id', PhlatScript.getString("Servo pen control"))
+      wd.execute_script("setCheckbox('servo','"+PhlatScript.useServo?.inspect()+"')")
 
       wd.setCaption('laserApproachDiameter_id', PhlatScript.getString("Approach Diameter"))
       wd.setValue('laserApproachDiameter', format_length(PhlatScript.laserApproachDiameter))
@@ -187,6 +191,9 @@ module PhlatScript
 #laser
       wd.execute_script("isChecked('laser')")
       PhlatScript.useLaser = (wd.get_element_value('checkbox_hidden') == "true") ? true : false
+#penservo      
+      wd.execute_script("isChecked('servo')")
+      PhlatScript.useServo = (wd.get_element_value('checkbox_hidden') == "true") ? true : false
       
 #      if PhlatScript.multipassEnabled?
         wd.execute_script("isChecked('multipass')")
@@ -215,6 +222,14 @@ module PhlatScript
       PhlatScript.rampangle = PhlatScript.rampangle < 0 ? 0 : PhlatScript.rampangle
       if (PhlatScript.rampangle > 45)
          PhlatScript.rampangle =  PhlatScript.rampangle % 46
+      end
+      if (PhlatScript.useServo?)
+         puts "useservo overriding" 
+         #this overrides ramping and laser and multipass
+         PhlatScript.useLaser = false
+         PhlatScript.useMultipass = false
+         PhlatScript.mustramp = false
+         PhlatScript.gen3D = false
       end
       if (PhlatScript.useLaser?)             
          #PhlatScript.useMultipass = false    # cannot multipass either
@@ -272,6 +287,7 @@ module PhlatScript
          prompts.push(PhlatScript.getString("Show Gcode"))
          prompts.push("Table top is Z Zero")
          prompts.push("Ramp in Z")
+         prompts.push("Servo pen control")
          prompts.push("Ramp angle Limit");
          prompts.push("Comment Remarks")
 
@@ -307,12 +323,13 @@ module PhlatScript
          defaults.push(PhlatScript.showGplot?.inspect())
          defaults.push(PhlatScript.tabletop?.inspect())
          defaults.push(PhlatScript.mustramp?.inspect())
+         defaults.push(PhlatScript.useServo?.inspect())
          defaults.push(PhlatScript.rampangle.to_s)
          defaults.push(encoded_comment_text)
 
          # dropdown options can be added here
 #         if PhlatScript.multipassEnabled?
-            list = ["","","","","","","","","","","","false|true","false|true","","","","false|true","","false|true","","false|true","false|true","false|true","",""]
+            list = ["","","","","","","","","","","","false|true","false|true","","","","false|true","","false|true","","false|true","false|true","false|true","false|true","",""]
 #         else
 #            list = ["","","","","","","","","","","","false|true","false|true","","false|true","false|true","false|true","",""]
 #         end
@@ -362,8 +379,9 @@ module PhlatScript
                PhlatScript.showGplot = (input[20] == 'true')
                PhlatScript.tabletop = (input[21] == 'true')
                PhlatScript.mustramp = (input[22] == 'true')
-               PhlatScript.rampangle = input[23].to_f
-               PhlatScript.commentText = input[24].to_s
+               PhlatScript.servo = (input[23] == 'true')
+               PhlatScript.rampangle = input[24].to_f
+               PhlatScript.commentText = input[25].to_s
 #            else
 #               PhlatScript.gen3D = (input[12] == 'true')
 #               PhlatScript.stepover = input[13].to_f
@@ -377,7 +395,7 @@ module PhlatScript
       else #---------------------------webdialog--------------------------------------------
         view = model.active_view
         width = 600
-        height = 795
+        height = 812
         x = (view.vpwidth - width)/2
         y = (view.vpheight - height)/2
         x = 0 if x < 0
@@ -432,6 +450,7 @@ module PhlatScript
             web_dialog.setValue('laserCustomRetract', $phoptions.default_laserCustomRetract)
             web_dialog.execute_script("setCheckbox('overheadgantry','"+ $phoptions.default_overhead_gantry?.inspect()+"')")
             web_dialog.execute_script("setCheckbox('laser','"+          $phoptions.default_laser?.inspect()+"')")
+            web_dialog.execute_script("setCheckbox('servo','"+          $phoptions.default_servo?.inspect()+"')")
             web_dialog.execute_script("setCheckbox('multipass','"+      $phoptions.default_multipass?.inspect()+"')")
             web_dialog.execute_script("setCheckbox('showgplot','"+      $phoptions.default_show_gplot?.inspect()+"')")
             web_dialog.execute_script("setCheckbox('gen3D','"+          $phoptions.default_gen3d?.inspect()+"')")

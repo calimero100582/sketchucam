@@ -17,6 +17,7 @@ module PhlatScript
          @debugc = ''  # a place to put debugging comments in subfunctions like getfuzzyystep
          @debugramp = false
          puts "debug true in PhlatMill.rb\n" if @debug || @debugramp
+         @pcomment = '' #see setComment
          @quarters = $phoptions.quarter_arcs? # use quarter circles in plunge bores?  defaults to true
          # manual user options - if they find this they can use it (-:
          @quickpeck = $phoptions.quick_peck?   # if true will not retract to surface when peck drilling, withdraw only 0.5mm
@@ -28,6 +29,25 @@ module PhlatScript
          @laserCustomRetract = PhlatScript.laserCustomRetract # custom retract
          @laser_grbl_mode = $phoptions.laser_GRBL_mode? # affects how holes are coded
          @laser_power_mode = $phoptions.laser_power_mode? # M4 if true, M3 is false
+         @servo = PhlatScript.useServo?
+         if @servo
+            # servo overrides laser and ramping and multipass
+            @laser = false
+            PhlatScript.mustramp = false
+            PhlatScript.useMultipass = false
+            $phoptions.feed_adjust = false # dont use arc feed adjust
+         end   
+         @servo_up = $phoptions.servo_up.to_i      # must be integers
+         @servo_down = $phoptions.servo_down.to_i
+         if @servo_up > @servo_down
+            #servo_up must be less than servo_down because servo 0 is pen UP park position
+            t = @servo_up
+            @servo_up = @servo_down
+            @servo_down = t
+         end
+            
+         @servo_time = $phoptions.servo_time
+         @penPos = @servo_up
          @cboreinner = 0 # diameter of inner hole for counterbores
          #
          @max_x = 48.0
@@ -75,6 +95,15 @@ module PhlatScript
          @tooshorttoramp = 0.02           # length of an edge that is too short to bother ramping, will be calculated
        end
 
+      # Sketchup8s version of ruby does not round to more than 0 places
+      def round(input,places)
+         mult = 10.0 ** places
+         input *= mult
+         input = input.round
+         input = input / mult
+         input
+      end
+      
       # feed the retract depth and tabel zero into this object
       def set_retract_depth(newdepth, tableflag)
          @retract_depth = newdepth
@@ -101,7 +130,7 @@ module PhlatScript
       # if feed_adjust is true then scale feedrate, else just return the given rate
       def feedScale(diam, feedrate)
          feedratio = (diam - @bit_diameter) / diam
-			puts "diam #{diam.to_mm} feedratio #{feedratio}" if @debug
+			puts "   diam #{sprintf("%0.3f",diam.to_mm)} feedratio #{sprintf("%0.3f",feedratio)}" if @debug
          if (feedratio <= 0.8) && $phoptions.feed_adjust? # if true then reduce feedrate during arc moves in holes
             result = feedratio > 0.1 ? feedratio * feedrate : 0.1 * feedrate
             if result.to_mm < 50.mm # GRBL lower limit
@@ -201,7 +230,7 @@ module PhlatScript
 
       # Start the job and output the header info to the cnc file
       # * outputs A B C axis commands if needed
-      def job_start(optim, extra = @extr)
+      def job_start(optim, gcodedebug, extra = @extr)
          if @output_file_name
             done = false
             until done
@@ -220,7 +249,7 @@ module PhlatScript
          @tooshorttoramp = @bit_diameter / 2
          @rampdist = @bit_diameter * RAMPMULT
 
-         cncPrint("%\n")
+         #cncPrint("%\n")
          # do a little jig to prevent the code highlighter getting confused by the bracket constructs
          vs1 = PhlatScript.getString('PhlatboyzGcodeTrailer')
          vs2 = Sketchup.extensions["Phlatboyz Tools"].version
@@ -286,6 +315,9 @@ module PhlatScript
                cncPrintC('LASER is ON')
             end
          end
+         if @servo # servo mode in header
+            cncPrintC('Servo pen control mode')
+         end
 
          if extra != '-'
             # puts extra
@@ -296,6 +328,9 @@ module PhlatScript
          PhlatScript.checkParens(@comment, 'Comment')
          # puts @comment
          @comment.split(/\$\//).each { |line| cncPrintC(line) } unless @comment.empty?
+
+         cncPrintC("PhlatMill debug is ON") if @debug   
+         cncPrintC("GcodeUtil debug is ON") if gcodedebug   
 
          # adapted from swarfer's metric code
          # metric by SWARFER - this does the basic setting up from the drawing units
@@ -356,13 +391,24 @@ module PhlatScript
          end
 
          # output A or B axis rotation if selected
+         if !(@laser || @servo)
 			zstr = format_measure('Z', $phoptions.end_z);
-         cncPrint("G53 G0 #{zstr}\n") if !@laser #Sep2018 safe raise before initial move to start point
+            retract($phoptions.end_z,"G53 G0")   #Sep2018 safe raise before initial move to start point
+            setZ(@retract_depth * 2)
+            @cc = 'G00'
+         else
+            setZ(@retract_depth * 2)
+         end
+         if @servo
+            cncPrint('M3 S' , @servo_up , "\n")
+            @penPos = @servo_up # keep track of actual pen position
+            setZ(@retract_depth * 2)
+         end
          cncPrint('G00 A', $phoptions.posA.to_s, "\n") if $phoptions.useA?
          cncPrint('G00 B', $phoptions.posB.to_s, "\n") if $phoptions.useB?
          cncPrint('G00 C', $phoptions.posC.to_s, "\n") if $phoptions.useC?
-         cncPrint("G0 X0 Y0\n")
-         if @laser == false
+         #cncPrint("G0 X0 Y0\n")
+         if !(@laser || @servo)
             cncPrint('M3 S', @spindle_speed, "\n") # M3 - Spindle on (CW rotation)   S spindle speed
          end
       end
@@ -381,7 +427,7 @@ module PhlatScript
          end
 
          cncPrint("M30\n") # M30 - End of program/rewind tape
-         cncPrint("%\n")
+         #cncPrint("%\n")
          if @mill_out_file
             begin
                @mill_out_file.close
@@ -416,13 +462,90 @@ module PhlatScript
          return depth
       end
 
+      # put the pen down in servo_time seconds, assume it is up as servo_up
+      # note that the servo will go to (0) when M5 is issued, so this must be a safe penUP position
+      # ergo servo_up  < servoDown
+      def penDown()
+         cncPrintC('penDown')
+         if (@penPos == @servo_down)
+            return
+         end
+         if (@servo_time == 0)
+            # output 1 move
+            cncPrint('M3 S' , @servo_down.to_i, "\n")
+            cncPrint('G4 P', sprintf("%0.3f",0.1) , "\n")
+            @penPos = @servo_down
+            return
+         end
+         diff = @servo_down - @servo_up
+         steps = diff / 8
+         if steps < 1
+            steps = 1
+         end
+         step = (diff / steps).to_i
+         timestep = @servo_time / steps
+         now = @servo_up
+         while now < @servo_down
+            now += step
+            if now > @servo_down
+               now = @servo_down
+               timestep = 0
+            end      
+            cncPrint('M3 S' , now.to_i, "\n")
+            if timestep > 0
+               cncPrint('G4 P', sprintf("%0.3f",timestep) , "\n")
+            end
+         end
+         @penPos = @servo_down   
+      end
+
+      # put the pen Up in servo_time seconds, assume it is DOWN as servo_down
+      # note that the servo will go to (0) when M5 is issued, so this must be a safe penUP position
+      # ergo servo_up  < servoDown
+      def penUp()
+         cncPrintC('penUp')
+         if (@penPos == @servo_up)
+            return
+         end
+         if (@servo_time == 0)
+            # output 1 move
+            cncPrint('M3 S' , @servo_up.to_i, "\n")
+            cncPrint('G4 P', sprintf("%0.3f",0.1) , "\n")
+            @penPos = @servo_up
+            return
+         end
+         
+         diff = @servo_down - @servo_up
+         steps = diff / 8  #steps of 8, servo scaled 0..255
+         if steps < 1
+            steps = 1
+         end
+         step = (diff / steps).to_i
+         timestep = round(@servo_time / steps, 3)
+         puts "timestep " +  timestep.to_s
+         now = @servo_down
+         while now > @servo_up
+            now -= step
+            if now < @servo_up
+               now = @servo_up
+               timestep = 0
+            end
+            cncPrint('M3 S' , now.to_i, "\n")
+            if timestep > 0
+               cncPrint('G4 P', sprintf('%0.3f',timestep) , "\n")
+            end
+         end
+         @penPos = @servo_up   
+      end
+
       # Move to xo,yo,zo
       # * only outputs axes that have changed
       # * Obeys @laser
       # * if multipass is on, AND @laser, then every pass will be at 100% power
       def move(xo, yo = @cy, zo = @cz, so = @speed_curr, cmd = @cmd_linear)
          # cncPrint("(move " +sprintf("%6.3f",xo.to_mm)+ ", "+ sprintf("%6.3f",yo.to_mm)+ ", "+ sprintf("%6.3f",zo.to_mm)+", "+ sprintf("feed %6.2f",so)+ ", cmd="+ cmd+")\n")
-         # puts "(move ", sprintf("%10.6f",xo), ", ", sprintf("%10.6f",yo), ", ", sprintf("%10.6f",zo),", ", sprintf("feed %10.6f",so), ", cmd=", cmd,")\n"
+         #puts "(move ", sprintf("%10.6f",xo), ", ", sprintf("%10.6f",yo), ", ", sprintf("%10.6f",zo),", ", sprintf("feed %10.6f",so), ", cmd=", cmd,")\n" if @debug
+         ringonce("move #{zo.to_mm}",caller)         
          if cmd != @cmd_rapid
             if !notequal(@retract_depth, zo)
                cmd = @cmd_rapid
@@ -495,9 +618,19 @@ module PhlatScript
                end
             else
                if notequal(zo, @cz)
+                  if (@servo)
+                     if zo < @cz  # going down
+                        penDown()
+                        command_out += format_measure('Z',-0.1)
+                     else  # going up
+                        penUp()
+                        command_out += format_measure('Z',0.1)
+                     end
+                  else
                   hasz = true
                   command_out += format_measure('Z', zo)
                end
+            end
             end
 
             if !hasx && !hasy && hasz # if only have a Z motion
@@ -511,6 +644,10 @@ module PhlatScript
                command_out += format_feed(so)
                @cs = so
             end
+            if @pcomment != ''
+               command_out += ' ' + PhlatScript.gcomment(@pcomment) if $phoptions.usecomments?
+               @pcomment = ''
+            end            
             command_out += "\n"
             cncPrint(command_out)
             @cx = xo
@@ -525,6 +662,7 @@ module PhlatScript
       # * Obeys @laser
       def retract(zo = @retract_depth, cmd = @cmd_rapid)
          #      cncPrintC("(retract ", sprintf("%10.6f",zo), ", cmd=", cmd,")\n")
+         ringonce("retract #{zo.to_mm}",caller)
          #      if (zo == nil)
          #        zo = @retract_depth
          #      end
@@ -552,6 +690,11 @@ module PhlatScript
                end
                cmd = 'M05' # force output of motion command at next move
             else
+               if @servo
+                  penUp()
+                  command_out += 'G0 Z0.1'
+                  cmd = @cmd_rapid
+               else
                if @Limit_up_feed && (cmd == 'G0') && (zo > 0) && (@cz < 0)
                   cncPrintC("(RETRACT G1 to material thickness at plunge rate)\n")
                   command_out += 'G01' + format_measure('Z', 0)
@@ -562,9 +705,16 @@ module PhlatScript
                   command_out += 'G00' + format_measure('Z', zo)
                else
                   #          cncPrintC("(RETRACT normal #{@cz} to #{zo} )\n")
+                     if notequal(zo,@cz)
                   command_out += cmd if (cmd != @cc) || @gforce
                   command_out += format_measure('Z', zo)
                end
+            end
+               end
+            end
+            if @pcomment != ''
+               command_out += ' ' + PhlatScript.gcomment(@pcomment) if $phoptions.usecomments?
+               @pcomment = ''
             end
             command_out += "\n"
             cncPrint(command_out)
@@ -577,10 +727,11 @@ module PhlatScript
       # * +zo+ is Z level to go to
       # * +so+ is feed speed to use
       # * +cmd+ = default cmd, normally G01
-      # * +fast+ = use fastappraoch , set to false to force it off
-      # * Obeys @laser
+      # * +fast+ = use fastapproach , set to false to force it off
+      # * Obeys @laser and @servo
       def plung(zo, so = @speed_plung, cmd = @cmd_linear, fast = true)
          #      cncPrintC("plung "+ sprintf("%10.6f",zo.to_mm)+ ", @cs="+ @cs.to_mm.to_s+ ", so="+ so.to_mm.to_s+ " cmd="+ cmd+"\n")
+         ringonce("plung #{zo.to_mm}", caller)
          if !notequal(zo, @cz)
             @no_move_count += 1
             false
@@ -605,11 +756,15 @@ module PhlatScript
                   # calculate 'laser brightness' as a percentage of material thickness
                   depth = laserbright(zo)
                   cmd = @laser_power_mode ? 'M04' : 'M03'
-                  cncPrint(cmd + ' S', depth.abs.to_i)
+               cncPrint(cmd + ' S', depth.abs.to_i, "\n")
                   so = 3.14 # make sure feed rate gets output on next move
                end
                cmd = 'm3' # force output of motion commands at next move
             else
+               if @servo
+                  penDown()
+                  command_out += 'G1 Z-0.1'
+               else
                # if above material, G00 to near surface, fastapproach
                if fast && @fastapproach
                   if !notequal(@cz, @retract_depth) && (zo < @cz)
@@ -617,20 +772,22 @@ module PhlatScript
                      flag = false
                      if @table_flag
                         if (@material_thickness + offset) < @retract_depth
-                           @cz = @material_thickness + offset
+                              nz = @material_thickness + offset
                            flag = true
                         end
                      else
                         if offset < @retract_depth
-                           @cz = 0.0 + offset
+                              nz = 0.0 + offset
                            flag = true
                         end
                      end
-                     if flag
-                        command_out += 'G00' + format_measure('Z', @cz) + "\n"
+                        if flag && nz != @cz
+                           retract(nz)
                         @cc = @cmd_rapid
                      end
                   end
+                  else
+                     retract(@retract_depth)  # may do nothing
                end
                command_out += cmd if (cmd != @cc) || @gforce
                command_out += format_measure('Z', zo)
@@ -642,8 +799,11 @@ module PhlatScript
                   @cs = so
                end
             end
+            end
+            if (command_out != '')
             command_out += "\n"
             cncPrint(command_out)
+            end
             @cz = zo
             @cc = cmd
             true
@@ -1235,9 +1395,9 @@ module PhlatScript
          else
             if PhlatScript.useMultipass?
                step = -PhlatScript.multipassDepth
-               command_out += "(step from mpass was #{step}" if @debug
+               command_out += "(step from mpass was #{step.to_mm}" if @debug
                step = StepFromMpass(zstart, zend, step) # possibly recalculate step to have equal sized steps
-               command_out += "   became #{step})\n" if @debug
+               command_out += "   became #{step.to_mm})\n" if @debug
             else
                command_out += '(step from bit' if @debug
                step = StepFromBit(zstart, zend) # each spiral Z feed will be bit diameter/2 or slightly less
@@ -1550,6 +1710,13 @@ module PhlatScript
          end
          command_out += "   (SO final ynow #{sprintf('%0.2f',ynow.to_mm)})\n" if @debug
          #puts "DIAM1 #{diam1.to_mm} diam2 #{diam2.to_mm} feed1 #{feed1.to_mm} feed2 #{feed2.to_mm} feed3 #{feed3.to_mm}"
+         # in the case where the loop does nothing we need to calculate feed3
+         if cnt == 0
+            puts "calc feed3" if @debug
+            diam3 = (yo - yoff) * 2 + @bit_diameter
+            feed3 = feedScale(diam3, @speed_curr)
+            #puts "feed3 #{feed3}"
+         end
 
          @cs = feed3
 
@@ -2276,7 +2443,7 @@ module PhlatScript
       # Instead of a plunged hole, spiral bore to depth, doing diameter first with an outward spiral.
       # * handles multipass by itself, also handles ramping.
       # * this is different enough from the old plunge bore that making it conditional within 'plungebore'
-      # would make it too complicated
+      # * would make it too complicated
       # * must also obey @cboreinner
       def plungeborediam(xo, yo, zStart, zo, diam, needretract = true)
          # @debug = true
@@ -2344,7 +2511,7 @@ module PhlatScript
          # for outward spirals we are ALWAYS using fuzzy step so each spiral is the same size
          ystep = GetFuzzyYstep(diam, ystep, true, true) # force mustramp true to get correct result
 
-         command_out += "(Ystep fuzzy #{ystep.to_mm})\n" if @debug
+         command_out += "(Ystep fuzzy #{sprintf("%0.2f",ystep.to_mm)})\n" if @debug
          #      if (@cboreinner > 0)
          #         nowyoffset = (@cboreinner / 2) + (@bit_diameter/2)
          #      else
@@ -2388,10 +2555,10 @@ module PhlatScript
             command_out += acmd + format_measure('Y', yy) + format_measure('I0.0 J', rr)
             @precision -= 1
             if notequal(so, @cs)
-               #command_out += "(so #{so}  @cs #{@cs})" if @debug
+               #command_out += "(so #{so.to_mm}  @cs #{@cs.to_mm})" if @debug
                command_out += format_feed(so)
                @cs = so
-               command_out += "(   so #{so}  @cs #{@cs})" if @debug
+               command_out += "(   so #{so.to_mm}  @cs #{@cs.to_mm})" if @debug
             end
             command_out += "\n"
 
@@ -2498,12 +2665,12 @@ module PhlatScript
          # mid point between points (x3, y3).
          x3 = (x1 + x2) / 2
          y3 = (y1 + y2) / 2
-         # one answer
-         xa = x3 + Math.sqrt(r**2 - (q / 2)**2) * (y1 - y2) / q
-         ya = y3 + Math.sqrt(r**2 - (q / 2)**2) * (x2 - x1) / q
+         # one answer =- .abs to prevent any negative parameters to sqrt
+         xa = x3 + Math.sqrt( (r**2 - (q / 2)**2).abs ) * (y1 - y2) / q
+         ya = y3 + Math.sqrt( (r**2 - (q / 2)**2).abs ) * (x2 - x1) / q
          # other answer
-         xb = x3 - Math.sqrt(r**2 - (q / 2)**2) * (y1 - y2) / q
-         yb = y3 - Math.sqrt(r**2 - (q / 2)**2) * (x2 - x1) / q
+         xb = x3 - Math.sqrt( (r**2 - (q / 2)**2).abs ) * (y1 - y2) / q
+         yb = y3 - Math.sqrt( (r**2 - (q / 2)**2).abs ) * (x2 - x1) / q
 
          # which one is closer to cp?
          pa = Geom::Point3d.new(xa, ya, 0.0)
@@ -2518,18 +2685,20 @@ module PhlatScript
       # Use IJ format arc movement, more accurate, definitive direction (2016v1.4c - finds centers)
       # * if print is false then return the string rather than cncprint it, for ramplimitarc
       # * If @laser is enabled then the correct M3/M4 will be output before the move
+      # for very small arc segments force a linear move instead
       def arcmoveij(xo, yo, centerx, centery, radius, g3 = false, zo = @cz, so = @speed_curr, cmd = @cmd_arc, print = true)
          cmd = g3 ? @cmd_arc_rev : @cmd_arc
          # puts "g3: #{g3} cmd #{cmd}"
          # G17 G2 x 10 y 16 i 3 j 4 z 9
          # G17 G2 x 10 y 15 r 20 z 5
          command_out = ''
-         if radius > 0.01.inch # is radius big enough?
+         p1 = Geom::Point3d.new(@cx, @cy, 0.0)
+         p2 = Geom::Point3d.new(xo, yo, 0.0)         
+         if (p1.distance(p2).abs > 0.02.inch) && (radius > 0.01.inch) # is radius big enough?
             cp = Geom::Point3d.new(centerx, centery, 0.0)
             #   arcmove(xo,yo,radius,g3,zo)
             # always calculate real center, and optionally adjust radius
-            p1 = Geom::Point3d.new(@cx, @cy, 0.0)
-            p2 = Geom::Point3d.new(xo, yo, 0.0)
+            
             r1 = cp.distance(p1)
             r2 = cp.distance(p2)
             nradius = (r1 + r2) / 2.0 # new radius as average of the two calculated radii
@@ -2593,7 +2762,7 @@ module PhlatScript
             command_out += "\n"
             cncPrint(command_out) if print
          else
-            arcmove(xo, yo, radius, g3, zo) # will do a line segment
+            arcmove(xo, yo, 0.005.inch, g3, zo) # will always do a line segment because we lied about the radius
          end
          if print
             @cx = xo
@@ -2611,16 +2780,64 @@ module PhlatScript
          if !notequal(@cz, @retract_depth) && !notequal(@cy, 0) && !notequal(@cx, 0)
             @no_move_count += 1
          else
-            retract(@retract_depth)
-            cncPrint('G00 X0 Y0 ')
-            cncPrint(PhlatScript.gcomment('home')) if $phoptions.usecomments?
-            cncPrint("\n")
-            @cx = 0
-            @cy = 0
-            @cz = @retract_depth
+            #retract(@retract_depth)
+            #zstr = format_measure('Z', $phoptions.end_z);
+            #cncPrint("G53 G0 #{zstr}\n")   
+            cncPrint(PhlatScript.gcomment('home at end of job') + "\n") if $phoptions.usecomments?
+            if !$phoptions.use_home_height?
+               retract($phoptions.end_z,'G53 G0')
+               setZ(@retract_depth * 2)
+               move(0,0, @retract_depth * 2, 1, 'G0')
+            else
+               move(0,0, @cz, 1, 'G0')
+            end
+            
+            #cncPrint("\n")
             @cs = 0
             @cc = ''
          end
+      end
+      
+      # return the current Z level
+      def getZ
+         @cz
+      end
+      
+      #set Z height
+      def setZ(nz)
+         caller_line = caller.first.split(":")[2]
+         puts "setZ : #{caller_line} : #{nz.to_mm}mm"         
+         @cz = nz
+      end         
+      
+      #display caller information
+      def ringonce(funcname, called)
+         cname = called.first
+         cname = cname.gsub('C:/Program Files (x86)/Google/Google SketchUp 8/Plugins/Phlatboyz/','...')
+         puts "#{funcname} #{cname}" if @debug
+      end
+      
+      # set a comment string that can be added to retract or move commands
+      def setComment(comment)
+         @pcomment = comment
+      end
+      
+      #set cmd to a new value
+      def setCmd(cmd)
+         @cc = cmd
+      end
+
+      #do a safe move, detecting if a retract before or after is needed
+      # @cz is 2*@retract_depth after a G53 Z move
+      def safemove(x,y)
+         ringonce('safemove',caller) if @debug
+         if notequal(getZ, 2 * @retract_depth)
+            retract(@retract_depth) if getZ < @retract_depth
+            move(x, y)
+         else
+            move(x, y, 2*@retract_depth, 1, 'G0')
+            retract(@retract_depth) 
+         end         
       end
    end # class PhlatMill
 end # module PhlatScript

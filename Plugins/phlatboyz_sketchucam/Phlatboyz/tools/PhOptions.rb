@@ -51,6 +51,7 @@ module PhlatScript
          @default_safe_height    =  PhlatScript.conformat(phoptions.default_safe_height)
          @default_overhead_gantry =  (phoptions.default_overhead_gantry? ? '1' : '0')
          @default_laser           =  (phoptions.default_laser? ? '1' : '0')
+         @default_servo           =  (phoptions.default_servo? ? '1' : '0')
          @default_laserApproachDiameter   =  PhlatScript.conformat(phoptions.default_laserApproachDiameter)
          @default_laserCustomPlunge       = phoptions.default_laserCustomPlunge.to_s
          @default_laserCustomRetract      = phoptions.default_laserCustomRetract.to_s
@@ -79,7 +80,11 @@ module PhlatScript
          @use_fuzzy_pockets      =   (phoptions.use_fuzzy_pockets? ? '1' : '0')
          @ramp_angle             =   phoptions.ramp_angle.to_f.to_s
          @must_ramp              =   (phoptions.must_ramp? ? '1' : '0')
+         @servo_up               = phoptions.servo_up.to_i.to_s
+         @servo_down             = phoptions.servo_down.to_i.to_s
+         @servo_time             = phoptions.servo_time.to_f.to_s
          @gforce                 =   (phoptions.gforce? ? '1' : '0')
+         @duetforce                 =   (phoptions.duetforce? ? '1' : '0')
       #featuresforholes
          @use_reduced_safe_height =  (phoptions.use_reduced_safe_height? ? '1' : '0')
          @use_fuzzy_holes        =   (phoptions.use_fuzzy_holes? ? '1' : '0')
@@ -128,6 +133,7 @@ module PhlatScript
          @default_safe_height = Default_safe_height
          @default_overhead_gantry = Default_overhead_gantry
          @default_laser = false
+         @default_servo = false
          @default_laserApproachDiameter = Default_laserApproachDiameter
          @default_laserCustomPlunge = Default_laserCustomPlunge
          @default_laserCustomRetract = Default_laserCustomRetract
@@ -160,6 +166,7 @@ module PhlatScript
          @must_ramp              =  false
          @quarter_arcs           =  true
          @gforce                 = false
+         @duetforce              = false
          @useA                   = false  # these are not saved, just adjustable via the quicktools menu
          @useB                   = false
          @useC                   = false
@@ -180,6 +187,9 @@ module PhlatScript
          @toolfile               = 'no'
          @tooloffset             = 0.to_l
 
+         @servo_up = 255
+         @servo_down = 0
+         @servo_time = 0.5
 
          # if MyOptions.ini exists then read it
          path = PhlatScript.toolsProfilesPath()
@@ -251,6 +261,11 @@ module PhlatScript
             @default_laserApproachDiameter = getvalue(optin['default_laserApproachDiameter'])    if (optin.has_key?('default_laserApproachDiameter'))
             @default_laserCustomPlunge = optin['default_laserCustomPlunge']  if (optin.has_key?('default_laserCustomPlunge'))
             @default_laserCustomRetract = optin['default_laserCustomRetract']  if (optin.has_key?('default_laserCustomRetract'))
+
+            #default_servo
+            value = -1
+            value = getvalue(optin['default_servo'])                if (optin.has_key?('default_servo'))
+            @default_servo = value > 0 ? true :  false              if (value != -1)
 
             # Default_multipass = false
             value = -1
@@ -354,6 +369,10 @@ module PhlatScript
             value = -1
             value = getvalue(optin['gforce'])             if (optin.has_key?('gforce'))
             @gforce = value > 0 ? true :  false            if (value != -1)
+         #duetforce  = output safety moves for Duet - ie allow positive G53 moves
+            value = -1
+            value = getvalue(optin['duetforce'])             if (optin.has_key?('duetforce'))
+            @duetforce = value > 0 ? true :  false            if (value != -1)
          #quick peck drill cycle   
             value = -1
             value = getvalue(optin['quick_peck'])             if (optin.has_key?('quick_peck'))
@@ -376,6 +395,10 @@ module PhlatScript
             value = -1
             value = getvalue(optin['feedadjust'])             if (optin.has_key?('feedadjust'))
             @feedadjust = value > 0 ? true :  false           if (value != -1)
+         #servo pen
+            @servo_up             =   getvalue(optin['servo_up'])    if (optin.has_key?('servo_up'))             
+            @servo_down           =   getvalue(optin['servo_down'])    if (optin.has_key?('servo_down'))             
+            @servo_time           =   getvalue(optin['servo_time'])    if (optin.has_key?('servo_time'))             
          end
 
       end #initialize
@@ -625,12 +648,19 @@ module PhlatScript
       def default_overhead_gantry=(newval)
          @default_overhead_gantry = newval
       end
-
+#laser
       def default_laser?
          @default_laser
       end
       def default_laser=(newval)
          @default_laser = newval
+      end
+#servo pen
+      def default_servo?
+         @default_servo
+      end
+      def default_servo=(newval)
+         @default_servo = newval
       end
 
       def default_laserApproachDiameter
@@ -829,6 +859,30 @@ module PhlatScript
       def ramp_angle=(newval)
          @ramp_angle = newval % 46  # must be <=  45 degrees
       end
+#servo
+      def servo_up
+         @servo_up
+      end
+      def servo_up=(newval)
+         @servo_up = newval
+      end
+      def servo_down
+         @servo_down
+      end
+      def servo_down=(newval)
+         @servo_down = newval 
+      end
+      def servo_time
+         @servo_time
+      end
+      def servo_time=(newval)
+         if (newval >= 0)
+            @servo_time = newval 
+         else
+            $servo_time = 0
+         end   
+      end
+
 
       def must_ramp? 
          @must_ramp
@@ -850,6 +904,14 @@ module PhlatScript
       def gforce=(newval)
          @gforce = newval
       end
+      
+      def duetforce?
+         @duetforce
+      end
+      def duetforce=(newval)
+         @duetforce = newval
+      end
+
       
       def useA?
          @useA
@@ -1184,6 +1246,7 @@ end # class
             'Default_safe_height (Y) ',
             'Default_overhead_gantry ',
             'Default_laser ',
+            'Default_servo ',
             'Default_multipass ',
             'Default_multipass_depth ',
             'Default_stepover % ',
@@ -1199,6 +1262,7 @@ end # class
             @options.default_safe_height.to_l,
             @options.default_overhead_gantry?.inspect(),
             @options.default_laser?.inspect(),
+            @options.default_servo?.inspect(),
             @options.default_multipass?.inspect(),
             @options.default_multipass_depth.to_l,
             @options.default_stepover.to_f,
@@ -1212,6 +1276,7 @@ end # class
             '',
             '',
             '',
+            'true|false',
             'true|false',
             'true|false',
             'true|false',
@@ -1238,13 +1303,14 @@ end # class
             @options.default_safe_height     = input[3];
             @options.default_overhead_gantry = (input[4] == 'true');
             @options.default_laser           = (input[5] == 'true');
-            @options.default_multipass       = (input[6] == 'true');
-            @options.default_multipass_depth = input[7];
-            @options.default_stepover        = input[8];
-            @options.min_z                   = input[9];
-            @options.max_z                   = input[10];
-            @options.bracket                 = (input[11] == 'true');
-            @options.usecomments             = (input[12] == 'true');
+            @options.default_servo           = (input[6] == 'true');
+            @options.default_multipass       = (input[7] == 'true');
+            @options.default_multipass_depth = input[8];
+            @options.default_stepover        = input[9];
+            @options.min_z                   = input[10];
+            @options.max_z                   = input[11];
+            @options.bracket                 = (input[12] == 'true');
+            @options.usecomments             = (input[13] == 'true');
 
             @options.save
          end # if input
@@ -1283,6 +1349,7 @@ end # class
             'Limit ramping angle to (degrees) ',
             'Use Ramping ',
             'Force all Gcodes on for Marlin ',
+            'Allow positive endZ for Duet',
 				'End position Z for G53',
             ];
          defaults=[
@@ -1303,6 +1370,7 @@ end # class
              @options.ramp_angle.to_f,
             @options.must_ramp?.inspect(),
             @options.gforce?.inspect(),
+            @options.duetforce?.inspect(),
              @options.end_z.to_l,
             ];
          list=[
@@ -1321,6 +1389,7 @@ end # class
             '',
             'true|false',
             '',
+            'true|false',
             'true|false',
             'true|false',
             '',
@@ -1356,8 +1425,9 @@ end # class
             @options.ramp_angle              = input[12]  #float
             @options.must_ramp               = (input[13] == 'true')
             @options.gforce                  = (input[14] == 'true')
-            @options.end_z                   = input[15] #length
-				if @options.end_z > 0
+            @options.duetforce               = (input[15] == 'true')
+            @options.end_z                   = input[16] #length
+				if (@options.end_z > 0) and @options.duetforce
 				   @options.end_z = -@options.end_z
 				end
             #puts "saving must_ramp = #{@options.must_ramp?}"
@@ -1441,6 +1511,53 @@ end # class
       end # def select
    end # class
    
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#just for Servo pen control
+   class OptionsServoTool < PhlatTool
+      def initialize(opt)   #give it the options instance
+         super()
+         @options = opt  # store the options instance so we can manipulate it without a global
+         @tooltype=(PB_MENU_MENU)
+         @tooltip="Servo pen control options"
+         @statusText="Servo pen Options1"
+         @menuText="Servo Pen Options"
+      end
+
+      def select
+         model=Sketchup.active_model
+
+         # prompts
+         prompts=[
+            'Pen up value ',
+            'Pen down value ',
+            'Travel time, seconds '
+            ];
+         defaults=[
+            @options.servo_up.to_i,
+            @options.servo_down.to_i,
+            @options.servo_time.to_f
+            ];
+         list=[
+            '',
+            '',
+            ''
+            ];
+         begin
+            input=UI.inputbox(prompts, defaults, list, 'Servo pen control (read the help!)')
+         rescue ArgumentError => error
+            UI.messagebox(error.message)
+            retry
+         end         # input is nil if user cancelled
+             
+         # input is nil if user cancelled
+         if (input)
+            @options.servo_up = input[0]
+            @options.servo_down = input[1]
+            @options.servo_time = input[2]
+            @options.save
+         end # if input
+      end # def select
+   end # class
 
 
 end # module PhlatScript
